@@ -36,7 +36,9 @@ function sample_points(sol::SARSOPSolver, tree::SARSOPTree, b_idx::Int, L, U, t,
 
         bp_idx = tree.ba_children[ba_idx][op_idx]
         push!(tree.sampled, b_idx)
-        sample_points(sol, tree, bp_idx, Lt, Ut, t+1, ϵ)
+        if t < sol.max_steps
+            sample_points(sol, tree, bp_idx, Lt, Ut, t+1, ϵ)
+        end
     end
 end
 

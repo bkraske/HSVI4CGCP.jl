@@ -13,24 +13,17 @@ Base.@kwdef struct SARSOPSolver{LOW,UP} <: Solver
 end
 
 function solve_info(solver::SARSOPSolver, pomdp::POMDP)
-    # @info "start"
     tree = SARSOPTree(solver, pomdp)
 
     t0 = time()
     iter = 0
     ga = 10^(log10(max(abs(tree.V_upper[1]),abs(tree.V_lower[1])))-solver.ρ)
-    while time()-t0 < solver.max_time && root_diff(tree) > ga #solver.precision
-        # @show "sample"
+    while time()-t0 < solver.max_time && root_diff(tree) > ga #root_diff(tree) > solver.precision
         sample!(solver, tree)
-        # @show "backup"
         backup!(tree)
         prune!(solver, tree)
         iter += 1
         ga = 10^(log10(max(abs(tree.V_upper[1]),abs(tree.V_lower[1])))-solver.ρ)
-        # @show "loop"
-        # @show root_diff(tree)
-        # @show ga
-        # @show time()-t0 < solver.max_time && root_diff(tree) > ga
     end
 
     pol = AlphaVectorPolicy(
