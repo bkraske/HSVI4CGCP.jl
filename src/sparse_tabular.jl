@@ -13,11 +13,45 @@ function ModifiedSparseTabular(pomdp::POMDP)
     O = ordered_observations(pomdp)
 
     terminal = _vectorized_terminal(pomdp, S)
-    T = POMDPTools.ModelTools.transition_matrix_a_s_sp(pomdp)
+    T = transition_matrix_a_sp_s(pomdp)
     R = _tabular_rewards(pomdp, S, A, terminal)
     O = POMDPTools.ModelTools.observation_matrix_a_sp_o(pomdp)
     b0 = _vectorized_initialstate(pomdp, S)
     return ModifiedSparseTabular(T,R,O,terminal,b0,discount(pomdp))
+end
+
+function transition_matrix_a_sp_s(mdp::Union{MDP, POMDP})
+    S = ordered_states(mdp)
+    A = ordered_actions(mdp)
+
+    ns = length(S)
+    na = length(A)
+    
+    transmat_row_A = [Int64[] for _ in 1:na]
+    transmat_col_A = [Int64[] for _ in 1:na]
+    transmat_data_A = [Float64[] for _ in 1:na]
+
+    for (si,s) in enumerate(S)
+        for (ai,a) in enumerate(A)
+            if isterminal(mdp, s) # if terminal, there is a probability of 1 of staying in that state
+                push!(transmat_row_A[ai], si)
+                push!(transmat_col_A[ai], si)
+                push!(transmat_data_A[ai], 1.0)
+            else
+                td = transition(mdp, s, a)
+                for (sp, p) in weighted_iterator(td)
+                    if p > 0.0
+                        spi = stateindex(mdp, sp)
+                        push!(transmat_row_A[ai], spi)
+                        push!(transmat_col_A[ai], si)
+                        push!(transmat_data_A[ai], p)
+                    end
+                end
+            end
+        end
+    end
+    transmats_A_SP_S = [sparse(transmat_row_A[a], transmat_col_A[a], transmat_data_A[a], ns, ns) for a in 1:na]
+    return transmats_A_SP_S
 end
 
 function _tabular_rewards(pomdp, S, A, terminal)
