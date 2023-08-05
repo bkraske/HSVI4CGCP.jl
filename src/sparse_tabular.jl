@@ -13,34 +13,11 @@ function ModifiedSparseTabular(pomdp::POMDP)
     O = ordered_observations(pomdp)
 
     terminal = _vectorized_terminal(pomdp, S)
-    T = _tabular_transitions(pomdp, S, A, terminal)
-    R = _tabular_rewards(pomdp, S, A, terminal)
-    O = _tabular_observations(pomdp, S, A, O)
+    T = POMDPTools.ModelTools.transition_matrix_a_s_sp(pomdp)
+    R = _tabular_rewards(pomdp, S, A)
+    O = POMDPTools.ModelTools.observation_matrix_a_sp_o(pomdp)
     b0 = _vectorized_initialstate(pomdp, S)
     return ModifiedSparseTabular(T,R,O,terminal,b0,discount(pomdp))
-end
-
-function _tabular_transitions(pomdp, S, A, terminal)
-    T = [Matrix{Float64}(undef, length(S), length(S)) for _ ∈ eachindex(A)]
-    for i ∈ eachindex(T)
-        _fill_transitions!(pomdp, T[i], S, A[i], terminal)
-    end
-    T
-end
-
-function _fill_transitions!(pomdp, T, S, a, terminal)
-    for (s_idx, s) ∈ enumerate(S)
-        if terminal[s_idx]
-            T[:, s_idx] .= 0.0
-            T[s_idx, s_idx] = 1.0
-            continue
-        end
-        Tsa = transition(pomdp, s, a)
-        for (sp_idx, sp) ∈ enumerate(S)
-            T[sp_idx, s_idx] = pdf(Tsa, sp)
-        end
-    end
-    T
 end
 
 function _tabular_rewards(pomdp, S, A, terminal)
@@ -55,24 +32,6 @@ function _tabular_rewards(pomdp, S, A, terminal)
         end
     end
     R
-end
-
-function _tabular_observations(pomdp, S, A, O)
-    _O = [Matrix{Float64}(undef, length(S), length(O)) for _ ∈ eachindex(A)]
-    for i ∈ eachindex(_O)
-        _fill_observations!(pomdp, _O[i], S, A[i], O)
-    end
-    _O
-end
-
-function _fill_observations!(pomdp, Oa, S, a, O)
-    for (sp_idx, sp) ∈ enumerate(S)
-        obs_dist = observation(pomdp, a, sp)
-        for (o_idx, o) ∈ enumerate(O)
-            Oa[sp_idx, o_idx] = pdf(obs_dist, o)
-        end
-    end
-    Oa
 end
 
 function _vectorized_terminal(pomdp, S)
