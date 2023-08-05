@@ -1,4 +1,8 @@
-# using HSVI4CGCP
+using Pkg
+Pkg.add(url = "https://github.com/qhho/ConstrainedPOMDPs.jl")
+Pkg.add(url = "https://github.com/WhiffleFish/ConstrainedPOMDPModels")
+using HSVI4CGCP
+
 const JSOP = HSVI4CGCP # convenience alias
 using POMDPModels
 using POMDPTools

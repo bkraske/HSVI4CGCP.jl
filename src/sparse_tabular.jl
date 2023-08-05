@@ -14,7 +14,7 @@ function ModifiedSparseTabular(pomdp::POMDP)
 
     terminal = _vectorized_terminal(pomdp, S)
     T = POMDPTools.ModelTools.transition_matrix_a_s_sp(pomdp)
-    R = _tabular_rewards(pomdp, S, A)
+    R = _tabular_rewards(pomdp, S, A, terminal)
     O = POMDPTools.ModelTools.observation_matrix_a_sp_o(pomdp)
     b0 = _vectorized_initialstate(pomdp, S)
     return ModifiedSparseTabular(T,R,O,terminal,b0,discount(pomdp))
