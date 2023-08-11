@@ -18,12 +18,23 @@ function POMDPTools.solve_info(solver::SARSOPSolver, pomdp::POMDP)
     t0 = time()
     iter = 0
     ga = exp10(ceil(log10(max(abs(tree.V_upper[1]),abs(tree.V_lower[1]))))-solver.ρ)
+    prev_u = Inf
+    prev_l = -Inf
     while time()-t0 < solver.max_time && root_diff(tree) > ga #root_diff(tree) > solver.precision
         sample!(solver, tree)
         backup!(tree)
         prune!(solver, tree)
         iter += 1
         ga = exp10(ceil(log10(max(abs(tree.V_upper[1]),abs(tree.V_lower[1]))))-solver.ρ)
+        if solver.verbose
+            dig = 10
+            println("$iter, LB:$(round(tree.V_lower[1],digits=dig)), UB:$(round(tree.V_upper[1],digits=dig)), Gap:$(round(root_diff(tree),digits=dig)), Term Gap:$(round(ga,digits=dig)), Time: $(time()-t0)")
+            if ((prev_u - tree.V_upper[1]) < -1e-8) || ((prev_l - tree.V_lower[1]) > 1e-8)
+                @warn "Bound Error"
+            end
+            prev_u = copy(tree.V_upper[1])
+            prev_l = copy(tree.V_lower[1])
+        end
     end
 
     pol = AlphaVectorPolicy(
